@@ -1,4 +1,4 @@
-#include <filesystem>
+#include <experimental/filesystem>
 
 struct AsyncFileStreamer {
 
@@ -12,23 +12,40 @@ struct AsyncFileStreamer {
 
     void updateRootCache() {
         // todo: if the root folder changes, we want to reload the cache
-        for(auto &p : std::filesystem::recursive_directory_iterator(root)) {
-            std::string url = p.path().string().substr(root.length());
+        for(auto &p : std::experimental::filesystem::recursive_directory_iterator(root)) {
+            std::cout << "p.path().string()=" << p.path().string() << std::endl;
+            std::string url = std::string("/") + p.path().string().substr(root.length());
             if (url == "/index.html") {
                 url = "/";
             }
 
             char *key = new char[url.length()];
             memcpy(key, url.data(), url.length());
+            std::cout << "\t" << std::string_view(key, url.length()) << std::endl;
             asyncFileReaders[std::string_view(key, url.length())] = new AsyncFileReader(p.path().string());
         }
     }
 
     template <bool SSL>
     void streamFile(uWS::HttpResponse<SSL> *res, std::string_view url) {
-        auto it = asyncFileReaders.find(url);
+        if (url == "/index.html") {
+            url = "/";
+        }
+        char *key = new char[url.length()];
+        memcpy(key, url.data(), url.length());
+
+        std::cout << "HttpRequest url=" << url << std::endl;
+        auto it = asyncFileReaders.find(std::string_view(key, url.length()));
         if (it == asyncFileReaders.end()) {
             std::cout << "Did not find file: " << url << std::endl;
+            
+            //default
+            url = "/";
+            char *defaultKey = new char[url.length()];
+            memcpy(defaultKey, url.data(), url.length());
+            
+            AsyncFileReader *defaultReader = asyncFileReaders[std::string_view(defaultKey, url.length())];
+            streamFile(res, defaultReader);
         } else {
             streamFile(res, it->second);
         }

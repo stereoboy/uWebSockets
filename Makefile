@@ -1,7 +1,7 @@
-EXAMPLE_FILES := HelloWorld EchoServer BroadcastingEchoServer
+EXAMPLE_FILES := HelloWorld EchoServer BroadcastingEchoServer HttpServer
 THREADED_EXAMPLE_FILES := HelloWorldThreaded EchoServerThreaded
 override CXXFLAGS += -lpthread -Wconversion -std=c++17 -Isrc -IuSockets/src
-override LDFLAGS += uSockets/*.o -lz
+override LDFLAGS += uSockets/*.o -lz  -lstdc++fs -lpthread
 
 # WITH_OPENSSL=1 enables OpenSSL 1.1+ support
 ifeq ($(WITH_OPENSSL),1)
@@ -27,7 +27,7 @@ endif
 
 .PHONY: examples
 examples:
-	cd uSockets && make
+#	cd uSockets && make
 	$(foreach FILE,$(EXAMPLE_FILES),$(CXX) -flto -O3 $(CXXFLAGS) examples/$(FILE).cpp -o $(FILE) $(LDFLAGS);)
 	$(foreach FILE,$(THREADED_EXAMPLE_FILES),$(CXX) -pthread -flto -O3 $(CXXFLAGS) examples/$(FILE).cpp -o $(FILE) $(LDFLAGS);)
 
